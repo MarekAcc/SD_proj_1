@@ -129,13 +129,8 @@ public:
             tmp->next = new_node;
             size++;
         }
-        else{
-            Node* new_node = new Node;
-            new_node->value = elem;
-            new_node->next = head;
-            head = new_node;
-            size++;
-        }
+        else //w przypadku gdy index==0
+            this->add(elem);
     }
     void remove(int index) //Usuwanie z dowolnej pozycji
     {
