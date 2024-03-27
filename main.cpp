@@ -19,6 +19,7 @@ private:
 public:
     int get_capacity(){return capacity;};
     int get_size(){return size;};
+    bool is_empty(){return ((size == 0) ? true : false);};
     int get_value_by_index(int index){return array[index];};
     int get_index_by_value(int value){
         for(int i = 0; i < size; i++)
@@ -66,7 +67,8 @@ public:
         array = (int*) malloc(typed_capacity * sizeof(int));
     }
     ~Array(){
-        delete array;
+        if(!is_empty())
+            delete array;
     }
 private:
     void double_capacity()
@@ -121,7 +123,7 @@ public:
     }
     void add(int elem, int index) //Dodanie na dowolną pozycję
     {
-        if(index != 0){
+        if(index > 0){
             Node* tmp = get_node(index-1);
             Node* new_node = new Node;
             new_node->value = elem;
@@ -129,8 +131,8 @@ public:
             tmp->next = new_node;
             size++;
         }
-        else //w przypadku gdy index==0
-            this->add(elem);
+        else //w przypadku gdy index <= 0 dodaj na początku
+            add(elem);
     }
     void remove(int index) //Usuwanie z dowolnej pozycji
     {
@@ -213,55 +215,64 @@ std::string line;
         while (std::getline(iss, token, ',')) {
             // Konwertuj łańcuch na liczbę i dodaj do wektora
             tab.add(std::stoi(token));
+            //Sprawdzenie postępow
+            if( tab.get_size()%10000 == 0)
+                cout<<"Wczytano "<<tab.get_size()<<" elementow"<<endl;
         }
-    }
-    std::cout << "Wczytana tablica:" << std::endl;
-    for (int i = 0; i<tab.get_size();i++) {
-        cout<<"tab["<<i<<"]="<<tab.get_value_by_index(i)<<endl;
     }
     return 0;
 }
 int wczytaj_liczby_z_pliku_do_listy(List& l, std::ifstream &inputFile)
 {
-    int counter = 0;
 std::string line;
     while (std::getline(inputFile, line)) {
         // Utwórz strumień łańcuchowy ze wiersza
         std::istringstream iss(line);
         std::string token;
     while (std::getline(iss, token, ',')) {
-        l.add(std::stoi(token), counter);
-        counter++;
+        l.add(std::stoi(token), l.get_size());
+        // //Sprawdzenie postępow
+        // if( l.get_size()%10000 == 0)
+        //     cout<<"Wczytano "<<l.get_size()<<" elementow"<<endl;
     }
-    }
-    std::cout << "Wczytana lista:" << std::endl;
-    for (int i = 0; i<l.get_size();i++) {
-        cout<<"L["<<i<<"]="<<l.get_value_by_index(i)<<endl;
     }
     return 0;
 }
 int main(void)
 {
-    // // Otwórz plik do zapisu
-    // std::ofstream outputFile("random_numbers.csv");
+    // Otwórz plik do zapisu
+    std::ofstream outputFile("random_numbers.csv");
 
-    // // Sprawdź, czy plik został poprawnie otwarty
-    // if (!outputFile.is_open()) {
-    //     std::cerr << "Nie można otworzyć pliku do zapisu.";
+    // Sprawdź, czy plik został poprawnie otwarty
+    if (!outputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do zapisu.";
+        return 1;
+    }
+    generuj_x_liczb_do_pliku(200000, outputFile);
+
+    // Zamknij plik
+    outputFile.close();
+    // /*LISTA*/
+    // std::ifstream inputFile("random_numbers.csv");
+    // if (!inputFile.is_open()) {
+    //     std::cerr << "Nie można otworzyć pliku do odczytu.";
     //     return 1;
     // }
-    // generuj_x_liczb_do_pliku(10, outputFile);
+    // List L{};
+    // wczytaj_liczby_z_pliku_do_listy(L, inputFile);
+    // inputFile.close();
 
-    // // Zamknij plik
-    // outputFile.close();
+    // return 0;
 
+
+    /*TABLICA*/
     std::ifstream inputFile("random_numbers.csv");
     if (!inputFile.is_open()) {
         std::cerr << "Nie można otworzyć pliku do odczytu.";
         return 1;
     }
-    List L{};
-    wczytaj_liczby_z_pliku_do_listy(L, inputFile);
+    Array tab{};
+    wczytaj_liczby_z_pliku_do_tablicy(tab, inputFile);
     inputFile.close();
 
     return 0;
@@ -308,13 +319,4 @@ int main(void)
     // for(int i = 0; i < 10; i++)
     //     l.add(i);
     // l.add(100, 1);
-    // l.add(300, 3);
-    // l.remove(2);
-    // l.show_all();
-
-    // Node* n = new Node;
-    // n = l.get_node(6);
-    // cout<<"Node[6]="<<n->value<<endl;
-
-
 }
