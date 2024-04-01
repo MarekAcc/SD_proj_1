@@ -6,92 +6,11 @@
 #include <limits>
 #include <sstream>
 #include "array.hpp"
+#include "list.hpp"
 
 
 using namespace std;
 
-
-class Node
-{
-    public:
-    int value;
-    Node* next;
-};
-class List
-{
-private:
-    int size;
-    Node* head;
-public:
-    List(int elem = 1);
-    ~List(){};
-    int get_size(){return size;}
-    int get_value_by_index(int index) //Zwroc wartosć na danym indexie 
-    {
-        Node* tmp = get_node(index);
-        return tmp->value;
-    }
-    void add(int elem) //Dodanie na początku
-    {
-        Node* new_node = new Node;
-        new_node->value = elem;
-        new_node->next = head;
-        head = new_node;
-        size++;
-    }
-    void add(int elem, int index) //Dodanie na dowolną pozycję
-    {
-        if(index > 0){
-            Node* tmp = get_node(index-1);
-            Node* new_node = new Node;
-            new_node->value = elem;
-            new_node->next = tmp->next;
-            tmp->next = new_node;
-            size++;
-        }
-        else //w przypadku gdy index <= 0 dodaj na początku
-            add(elem);
-    }
-    void remove(int index) //Usuwanie z dowolnej pozycji
-    {
-        Node* old = get_node(index-1);
-        Node* tmp = old->next;
-        old->next = old->next->next;
-        delete tmp;
-        size--;
-    }
-    void remove() //Domyslne usuwanie na początku
-    {
-        Node* tmp = head;
-        head = head->next;
-        delete tmp;
-        size--;
-    }
-   
-    void show_all()
-    {
-        Node* tmp = head;
-        for(int i = 0; i < size; i++)
-        {
-            std::cout<<"["<<i<<"]="<<tmp->value<<std::endl;
-            tmp = tmp->next;
-        }
-    }
-private:
-    Node* get_node(int index) //Zwroc node nr index
-    {
-        Node* tmp = head;
-        for(int i = 0; i < index; i++)
-            tmp = tmp->next;
-        return tmp;
-    }
-};
-
-List::List(int elem)
-{
-    head = nullptr;
-    size = 0;
-}
 int generuj_x_liczb_do_pliku(int x, std::string nazwa_pliku)
 {
     // Otwórz plik do zapisu
@@ -171,7 +90,7 @@ std::string line;
     inputFile.close();
     return 0;
 }
-int test_dodawania_do_tablicy(Array& arr, int n)
+int test_tablicy_dodawanie_na_koncu(int n)
 {
     //Zapełnij tablice losowymi numerami
     generuj_x_liczb_do_pliku(n, "random_numbers.csv");
@@ -182,8 +101,35 @@ int test_dodawania_do_tablicy(Array& arr, int n)
     }
    //Dodawaj do kazdej tablicy element na ostatnią pozycję
     auto begin = std::chrono::high_resolution_clock::now();
-    for(int i = 0; i < ileTablic;i++)
-    {
+    for(int i = 0; i < ileTablic;i++){
+        Tablice[i].add(5);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+
+    std::ofstream outputFile("wyniki.txt", std::ios::app);
+    if (!outputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do zapisu.";
+        return 1;
+    }
+    outputFile<< n << "         " << elapsed.count() * 1e-6 << " ms." << std::endl;
+    printf("Time measured: %.6f ms.\n", elapsed.count() * 1e-6);
+
+    delete[] Tablice;
+    return 0;
+}
+int test_tablicy_dodawanie_na_poczatku(int n)
+{
+    //Zapełnij tablice losowymi numerami
+    generuj_x_liczb_do_pliku(n, "random_numbers.csv");
+    int ileTablic = 100;
+    Array* Tablice = new Array[ileTablic];
+    for(int i = 0; i < ileTablic;i++){
+        wczytaj_liczby_z_pliku_do_tablicy(Tablice[i], "random_numbers.csv");
+    }
+   //Dodawaj do kazdej tablicy element na ostatnią pozycję
+    auto begin = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < ileTablic;i++){
         Tablice[i].add(5,0);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -197,63 +143,172 @@ int test_dodawania_do_tablicy(Array& arr, int n)
     outputFile<< n << "         " << elapsed.count() * 1e-6 << " ms." << std::endl;
     printf("Time measured: %.6f ms.\n", elapsed.count() * 1e-6);
 
+    delete[] Tablice;
+    return 0;
+}
+int test_listy_dodawanie(int n, int x)
+{
+    int pozycja;
+    if(n == x)
+        pozycja = n;
+    else
+        pozycja = 0;
+    generuj_x_liczb_do_pliku(n, "random_numbers.csv");
+    int ileList = 10;
+    List* Listy = new List[ileList];
+    for(int i = 0; i < ileList;i++){
+        wczytaj_liczby_z_pliku_do_listy(Listy[i],"random_numbers.csv");
+    }
+    //Dodawaj do kazdej listy element na ostatnią pozycję
+    auto begin = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < ileList;i++)
+    {
+        Listy[i].add(5, pozycja);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+
+    std::ofstream outputFile("wyniki_list.txt", std::ios::app);
+    if (!outputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do zapisu.";
+        return 1;
+    }
+    outputFile<< n << "         " << elapsed.count() * 1e-6 << " ms." << std::endl;
+    printf("Time measured: %.6f ms.\n", elapsed.count() * 1e-6);
+
+
+    delete[] Listy;
+    return 0;
+}
+int test_tablicy_usuwanie_na_poczatku(int n)
+{
+    //Zapełnij tablice losowymi numerami
+    generuj_x_liczb_do_pliku(n, "random_numbers.csv");
+    int ileTablic = 100;
+    Array* Tablice = new Array[ileTablic];
+    for(int i = 0; i < ileTablic;i++){
+        wczytaj_liczby_z_pliku_do_tablicy(Tablice[i], "random_numbers.csv");
+    }
+   //Dodawaj do kazdej tablicy element na ostatnią pozycję
+    auto begin = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < ileTablic;i++){
+        Tablice[i].remove_by_index(0);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+
+    std::ofstream outputFile("wyniki.txt", std::ios::app);
+    if (!outputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do zapisu.";
+        return 1;
+    }
+    outputFile<< n << "         " << elapsed.count() * 1e-6 << " ms." << std::endl;
+    printf("Time measured: %.6f ms.\n", elapsed.count() * 1e-6);
 
     delete[] Tablice;
     return 0;
 }
+int test_tablicy_usuwanie_na_koncu(int n)
+{
+    //Zapełnij tablice losowymi numerami
+    generuj_x_liczb_do_pliku(n, "random_numbers.csv");
+    int ileTablic = 100;
+    Array* Tablice = new Array[ileTablic];
+    for(int i = 0; i < ileTablic;i++){
+        wczytaj_liczby_z_pliku_do_tablicy(Tablice[i], "random_numbers.csv");
+    }
+   //Dodawaj do kazdej tablicy element na ostatnią pozycję
+    auto begin = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < ileTablic;i++){
+        Tablice[i].remove_by_index(n-1);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+
+    std::ofstream outputFile("wyniki.txt", std::ios::app);
+    if (!outputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do zapisu.";
+        return 1;
+    }
+    outputFile<< n << "         " << elapsed.count() * 1e-6 << " ms." << std::endl;
+    printf("Time measured: %.6f ms.\n", elapsed.count() * 1e-6);
+
+    delete[] Tablice;
+    return 0;
+}
+int test_listy_usuwanie();
 int main(void)
 {
-    Array B{};
-    test_dodawania_do_tablicy(B, 10);
-    test_dodawania_do_tablicy(B, 100);
-    test_dodawania_do_tablicy(B, 1002);
-    test_dodawania_do_tablicy(B, 2002);
-    test_dodawania_do_tablicy(B, 4002);
-    test_dodawania_do_tablicy(B, 8001);
-    test_dodawania_do_tablicy(B, 16002);
-    test_dodawania_do_tablicy(B, 32002);
-    test_dodawania_do_tablicy(B, 64000);
-    test_dodawania_do_tablicy(B, 128002);
 
+    // //Dodawanie ostatni element tablicy
+    // test_tablicy_dodawanie_na_koncu(10);
+    // test_tablicy_dodawanie_na_koncu(100);
+    // test_tablicy_dodawanie_na_koncu(1002);
+    // test_tablicy_dodawanie_na_koncu(2002);
+    // test_tablicy_dodawanie_na_koncu(4002);
+    // test_tablicy_dodawanie_na_koncu(8001);
+    // test_tablicy_dodawanie_na_koncu(16002);
+    // test_tablicy_dodawanie_na_koncu(32002);
+    // test_tablicy_dodawanie_na_koncu(64000);
+    // test_tablicy_dodawanie_na_koncu(128002);
 
-    // Array tab[100000];
+    // //Dodawanie pierwszy element tablicy
+    // test_tablicy_dodawanie_na_poczatku(10);
+    // test_tablicy_dodawanie_na_poczatku(100);
+    // test_tablicy_dodawanie_na_poczatku(1001);
+    // test_tablicy_dodawanie_na_poczatku(2002);
+    // test_tablicy_dodawanie_na_poczatku(4002);
+    // test_tablicy_dodawanie_na_poczatku(8001);
+    // test_tablicy_dodawanie_na_poczatku(16002);
+    // test_tablicy_dodawanie_na_poczatku(32002);
+    // test_tablicy_dodawanie_na_poczatku(64002);
+    // test_tablicy_dodawanie_na_poczatku(128002);
 
-    //  for (size_t i = 0; i < 100000; i++)
-    // {
-    //     for(int j = 0; i < 100;i++)
-    //         tab[i].add(j);
-    // }
-    // auto begin = std::chrono::high_resolution_clock::now();
-    // for(int i = 0;i<100000;i++)
-    // {
-    //     tab[i].add(10);
-    // }
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    // printf("Time measured: %.5f seconds.\n", elapsed.count() * 1e-9);
-    // std::cout<<elapsed.count()<<endl;
-    // tab.add(90,0);
-    // tab.add(100,1);
-    // tab.add(20,2);
-    // tab.add(200);
-    // tab.show_all();
-    // for(int i = 0; i < 130; i++){
-    //     tab.add(88+i);
-    // }
-    // tab.show_all();
-    // std::cout<<"Index: "<<tab.get_index_by_value(88)<<std::endl;
-    // std::cout<<"Value: "<<tab.get_value_by_index(9)<<std::endl;
-    // // tab.remove_by_value(89);
-    // // tab.remove_by_value(200);
-    // // tab.remove_by_index(0);
-    // tab.show_all();
+    // //Dodawanie ostatni element listy
+    // test_listy_dodawanie(10, 10);
+    // test_listy_dodawanie(100, 100);
+    // test_listy_dodawanie(1001, 1001);
+    // test_listy_dodawanie(2002, 2002);
+    // test_listy_dodawanie(4002, 4002);
+    // test_listy_dodawanie(8001, 8001);
+    // test_listy_dodawanie(16001, 16001);
+    // test_listy_dodawanie(32002, 32002);
+    // test_listy_dodawanie(64002, 64002);
+    // test_listy_dodawanie(128002, 128002);
 
-    // time tic
-    // for(int i = 0; i < 10000; i++)
-    //     tab.add();
-    // time toc
-    // List l{};
-    // for(int i = 0; i < 10; i++)
-    //     l.add(i);
-    // l.add(100, 1);
+    // //Dodawanie pierwszy element listy
+    // test_listy_dodawanie(10, 0);
+    // test_listy_dodawanie(100, 0);
+    // test_listy_dodawanie(1001, 0);
+    // test_listy_dodawanie(2002, 0);
+    // test_listy_dodawanie(4002, 0);
+    // test_listy_dodawanie(8001, 0);
+    // test_listy_dodawanie(16001, 0);
+    // test_listy_dodawanie(32002, 0);
+    // test_listy_dodawanie(64002, 0);
+    // test_listy_dodawanie(128002, 0);
+
+    // //Usuwanie pierwszy element tablicy
+    // test_tablicy_usuwanie_na_poczatku(10);
+    // test_tablicy_usuwanie_na_poczatku(100);
+    // test_tablicy_usuwanie_na_poczatku(1001);
+    // test_tablicy_usuwanie_na_poczatku(2002);
+    // test_tablicy_usuwanie_na_poczatku(4002);
+    // test_tablicy_usuwanie_na_poczatku(8001);
+    // test_tablicy_usuwanie_na_poczatku(16001);
+    // test_tablicy_usuwanie_na_poczatku(32002);
+    // test_tablicy_usuwanie_na_poczatku(64002);
+    // test_tablicy_usuwanie_na_poczatku(123002);
+
+    //Usuwanie ostatni element tablicy
+    test_tablicy_usuwanie_na_koncu(10);
+    test_tablicy_usuwanie_na_koncu(100);
+    test_tablicy_usuwanie_na_koncu(1001);
+    test_tablicy_usuwanie_na_koncu(2002);
+    test_tablicy_usuwanie_na_koncu(4002);
+    test_tablicy_usuwanie_na_koncu(8001);
+    test_tablicy_usuwanie_na_koncu(16001);
+    test_tablicy_usuwanie_na_koncu(32002);
+    test_tablicy_usuwanie_na_koncu(64002);
+    test_tablicy_usuwanie_na_koncu(123002);
 }
