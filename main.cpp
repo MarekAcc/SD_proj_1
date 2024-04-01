@@ -5,92 +5,10 @@
 #include <random>
 #include <limits>
 #include <sstream>
+#include "array.hpp"
 
 
 using namespace std;
-
-
-class Array
-{
-private:
-    int* array; //Pointer to actual array
-    int capacity; //Memory use
-    int size = 0; //Number of elements;
-public:
-    int get_capacity(){return capacity;};
-    int get_size(){return size;};
-    bool is_empty(){return ((size == 0) ? true : false);};
-    int get_value_by_index(int index){return array[index];};
-    int get_index_by_value(int value){
-        for(int i = 0; i < size; i++)
-            if(array[i] == value)
-                return i;
-        return 0;
-    } 
-    void add(int object, int index) //Dodawanie na określone miejsce
-    {
-        if(capacity == size){
-            double_capacity();
-        }
-        this->move_right(index);
-        array[index] = object;
-        size++;
-        return;
-    }
-    void add(int object) //Dodawanie na końcu(domyślne)
-    {
-        if(capacity == size){
-            this->double_capacity();
-        }
-        array[size] = object;
-        size++;
-        return;
-    }
-    void remove_by_index(int index)
-    {
-        this->move_left(index);
-        size--;
-    }
-    void remove_by_value(int value)
-    {
-        this->remove_by_index(this->get_index_by_value(value));
-    }
-    void show_all()
-    {
-        for(int i = 0; i < size; i++)
-        {
-            cout<<"["<<i<<"] = "<<array[i]<<endl;
-        }
-    }
-
-    Array(int typed_capacity = 4): capacity{typed_capacity}{
-        array = (int*) malloc(typed_capacity * sizeof(int));
-    }
-    ~Array(){
-        if(!is_empty())
-            delete array;
-    }
-private:
-    void double_capacity()
-    {
-        array = (int*)realloc(array, capacity*2*sizeof(int));
-        capacity *= 2;
-    }
-    void move_right(int index)
-    {
-        for(int i = size; i > index; i--)
-        {
-            array[i] = array[i - 1];
-        }
-    }
-    void move_left(int index)
-    {
-        for(int i = index; i < size; i++)
-        {
-            array[i] = array[i + 1]; 
-        }
-    }
-};
 
 
 class Node
@@ -174,13 +92,16 @@ List::List(int elem)
     head = nullptr;
     size = 0;
 }
-// int Array_test(Array arr)
-// {
-//     //time.start
-    
-// }
-int generuj_x_liczb_do_pliku(int x, std::ofstream &outputFile)
+int generuj_x_liczb_do_pliku(int x, std::string nazwa_pliku)
 {
+    // Otwórz plik do zapisu
+    std::ofstream outputFile(nazwa_pliku);
+
+    // Sprawdź, czy plik został poprawnie otwarty
+    if (!outputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do zapisu.";
+        return 1;
+    }
     // Pobierz minimalną i maksymalną wartość dla typu int
     int min_int = std::numeric_limits<int>::min();
     int max_int = std::numeric_limits<int>::max();
@@ -201,29 +122,40 @@ int generuj_x_liczb_do_pliku(int x, std::ofstream &outputFile)
         if (i < x - 1)
             outputFile << ",";
     }
+    outputFile.close();
     return 0;
 }
-int wczytaj_liczby_z_pliku_do_tablicy(Array& tab, std::ifstream &inputFile)
+int wczytaj_liczby_z_pliku_do_tablicy(Array& tab, std::string nazwa_pliku)
 {
-std::string line;
+    std::ifstream inputFile(nazwa_pliku);
+    if (!inputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do odczytu.";
+        return 1;
+    }
+    std::string line;
     while (std::getline(inputFile, line)) {
         // Utwórz strumień łańcuchowy ze wiersza
         std::istringstream iss(line);
         std::string token;
-
         // Parsuj każdą liczbę w wierszu i dodaj ją do wektora
         while (std::getline(iss, token, ',')) {
             // Konwertuj łańcuch na liczbę i dodaj do wektora
             tab.add(std::stoi(token));
             //Sprawdzenie postępow
-            if( tab.get_size()%10000 == 0)
-                cout<<"Wczytano "<<tab.get_size()<<" elementow"<<endl;
+            //if( tab.get_size()%10000 == 0)
+                //cout<<"Wczytano "<<tab.get_size()<<" elementow"<<endl;
         }
     }
+    inputFile.close();
     return 0;
 }
-int wczytaj_liczby_z_pliku_do_listy(List& l, std::ifstream &inputFile)
+int wczytaj_liczby_z_pliku_do_listy(List& l, std::string nazwa_pliku)
 {
+    std::ifstream inputFile("random_numbers.csv");
+    if (!inputFile.is_open()) {
+        std::cerr << "Nie można otworzyć pliku do odczytu.";
+        return 1;
+    }
 std::string line;
     while (std::getline(inputFile, line)) {
         // Utwórz strumień łańcuchowy ze wiersza
@@ -236,47 +168,52 @@ std::string line;
         //     cout<<"Wczytano "<<l.get_size()<<" elementow"<<endl;
     }
     }
+    inputFile.close();
     return 0;
 }
-int main(void)
+int test_dodawania_do_tablicy(Array& arr, int n)
 {
-    // Otwórz plik do zapisu
-    std::ofstream outputFile("random_numbers.csv");
+    //Zapełnij tablice losowymi numerami
+    generuj_x_liczb_do_pliku(n, "random_numbers.csv");
+    int ileTablic = 100;
+    Array* Tablice = new Array[ileTablic];
+    for(int i = 0; i < ileTablic;i++){
+        wczytaj_liczby_z_pliku_do_tablicy(Tablice[i], "random_numbers.csv");
+    }
+   //Dodawaj do kazdej tablicy element na ostatnią pozycję
+    auto begin = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < ileTablic;i++)
+    {
+        Tablice[i].add(5,0);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
 
-    // Sprawdź, czy plik został poprawnie otwarty
+    std::ofstream outputFile("wyniki.txt", std::ios::app);
     if (!outputFile.is_open()) {
         std::cerr << "Nie można otworzyć pliku do zapisu.";
         return 1;
     }
-    generuj_x_liczb_do_pliku(200000, outputFile);
-
-    // Zamknij plik
-    outputFile.close();
-    // /*LISTA*/
-    // std::ifstream inputFile("random_numbers.csv");
-    // if (!inputFile.is_open()) {
-    //     std::cerr << "Nie można otworzyć pliku do odczytu.";
-    //     return 1;
-    // }
-    // List L{};
-    // wczytaj_liczby_z_pliku_do_listy(L, inputFile);
-    // inputFile.close();
-
-    // return 0;
+    outputFile<< n << "         " << elapsed.count() * 1e-6 << " ms." << std::endl;
+    printf("Time measured: %.6f ms.\n", elapsed.count() * 1e-6);
 
 
-    /*TABLICA*/
-    std::ifstream inputFile("random_numbers.csv");
-    if (!inputFile.is_open()) {
-        std::cerr << "Nie można otworzyć pliku do odczytu.";
-        return 1;
-    }
-    Array tab{};
-    wczytaj_liczby_z_pliku_do_tablicy(tab, inputFile);
-    inputFile.close();
-
+    delete[] Tablice;
     return 0;
-
+}
+int main(void)
+{
+    Array B{};
+    test_dodawania_do_tablicy(B, 10);
+    test_dodawania_do_tablicy(B, 100);
+    test_dodawania_do_tablicy(B, 1002);
+    test_dodawania_do_tablicy(B, 2002);
+    test_dodawania_do_tablicy(B, 4002);
+    test_dodawania_do_tablicy(B, 8001);
+    test_dodawania_do_tablicy(B, 16002);
+    test_dodawania_do_tablicy(B, 32002);
+    test_dodawania_do_tablicy(B, 64000);
+    test_dodawania_do_tablicy(B, 128002);
 
 
     // Array tab[100000];
